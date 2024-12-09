@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebGIS w/ Chart.js & Leaflet</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+    
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="dados.js"></script>
+    <style>
+        body {
+            display: block; /* Mudar para layout em bloco */
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            width: 100%;  /* Mapa ocupará toda a largura da página */
+            height: 500px; /* Definir altura do mapa */
+        }
+
+        #barChartContainer {
+            width: 50%;  /* O gráfico também ocupará toda a largura */
+            height: 300px; /* Definir altura menor para o gráfico */
+            padding: 10px; /* Pequeno espaçamento */
+        }
+
+        canvas {
+            width: 100%;  /* Garantir que o canvas do gráfico use 100% da largura do container */
+            height: 100%; /* Altura será a mesma do container */
+        }
+    </style>
+</head>
+<body>
+
+<div id="map"></div> <!-- Mapa -->
+<div id="barChartContainer">
+    <canvas id="barChart"></canvas> <!-- Gráfico -->
+</div>
+
+<script>
+    // Inicializar mapa com Leaflet
+    var map = L.map('map').setView([-30.043108434721866, -51.19295038519587], 10);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    L.geoJSON(poligonos, {
+        onEachFeature: function (feature, layer) {
+            layer.on('click', function () {
+                updateChart([
+                    feature.properties.hospitais,
+                    feature.properties.ubs,
+                    feature.properties.upa,
+                    feature.properties.caps,
+                    feature.properties.outras
+                ], ['Hospitais', 'UBS', 'UPAs', 'CAPS', 'Outros']);
+            });
+        }
+    }).addTo(map);
+
+    // Adicionar marcador e eventos de clique
+    var markers = L.markerClusterGroup();
+    L.geoJSON(pontos).addTo(markers);
+    map.addLayer(markers);
+    
+    var currentChart = null;
+    // Função para atualizar o gráfico com Chart.js
+    function updateChart(data, labels) {
+        var ctx = document.getElementById('barChart').getContext('2d');
+        // console.log(ctx);
+        if (currentChart) {
+            currentChart.destroy();
+        }
+        currentChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Quantidade de Unidades de Saúde',
+                    data: data,
+                    backgroundColor: ['#ff6384', '#36a2eb', '#cc65fe', '#ffce56', '#66ff66']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false  // Ajuste de proporções
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
